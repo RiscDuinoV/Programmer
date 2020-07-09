@@ -18,7 +18,7 @@
 #endif
 
 
-typedef enum Config_States { ST_IDLE, ST_BAUDRATE, ST_SERIAL_PORT, ST_FILE, ST_DELAY };
+enum Config_States { ST_IDLE, ST_BAUDRATE, ST_SERIAL_PORT, ST_FILE, ST_DELAY };
 enum OutputFileFormat { NONE = 0, LATTICE_HEX, ALTERA_MIF };
 typedef struct
 {
