@@ -5,3 +5,11 @@ out/
 *.cmake
 Makefile
 *.json
+*.ninja_deps
+*.ninja_log
+*.vcxproj
+*.filters
+*.ninja
+*.sln
+*.txt
+!CMakeLists.txt
