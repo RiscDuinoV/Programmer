@@ -18,7 +18,7 @@
 #endif
 
 
-enum Config_States { ST_IDLE, ST_BAUDRATE, ST_SERIAL_PORT, ST_FILE, ST_DELAY };
+typedef enum Config_States { ST_IDLE, ST_BAUDRATE, ST_SERIAL_PORT, ST_FILE, ST_DELAY };
 enum OutputFileFormat { NONE = 0, LATTICE_HEX, ALTERA_MIF };
 typedef struct
 {
@@ -43,15 +43,14 @@ typedef struct
 
 void PrintMenu(void)
 {
-    std::cout << "RISC-V Programmer v0.4\n";
-    std::cout << "Usage : <a definir>\n\n";
+    std::cout << "RiscDuinoV Programmer v0.4\n";
     std::cout << "Valid options :\n";
     std::cout << " -b BAUDRATE\tSet baudrate (default : 115200)\n";
     std::cout << " -p PORT\tSelect Serial Port\n";
     std::cout << " -a FILE\tSelect the file to send to RISC-V\n";
     std::cout << " -r\t\tCode will be written only in RAM\n";
 	std::cout << " -LHex\tConvert input file into a Hex Lattice Memory Initialisation file\n";
-	std::cout << " -AMif\tConvert input file into a Altera Memory Initialisation File\n";
+	std::cout << " -AMif\tConvert input file into a Altera or Generic Memory Initialisation File\n";
 	std::cout << " -v\t\tVerbose\n";
 	std::cout << " -D DELAY\tDelay transmission of each byte by DELAY ms\n";
 }
@@ -184,12 +183,8 @@ int ConvOutputFormat(const ConfigStruct& Config)
 		return -1;
 	}
 }
-int main1(int argc, const char *argv[])
-//int main()
+int main(int argc, const char *argv[])
 {
-    //const int argc = 6;
-    //const char *argv[] = {"-b", "115200", "-p", "COM4", "-a", "C:\\Users\\Pedro\\Documents\\Programmation\\RISCV_MIPS\\Risc_V_Programmer\\Sortie.hex", "-r"};
-    //const char *argv[] = {"-b", "115200", "-p", "/dev/ttyS4", "-a", "/mnt/c/Users/Pedro/Documents/Programmation/RISCV_MIPS/Risc_V_Programmer/Sortie.hex", "-r"};
     std::vector<std::string> InputArgs;
     ConfigStruct Config;
     std::ifstream File;
@@ -232,10 +227,4 @@ int main1(int argc, const char *argv[])
 	}
 
     return 0;
-}
-int main(void)
-{
-	LatticeCreateHexFile("C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/FreeRTOS/bin/Sortie.bin", "C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/FreeRTOS/bin/Sortie.mem");
-	AlteraCreateMifFile("C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/FreeRTOS/bin/Sortie.bin", "C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/FreeRTOS/bin/Sortie.mif");
-	return 0;
 }
