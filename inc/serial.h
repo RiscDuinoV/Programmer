@@ -1,3 +1,8 @@
+#ifndef SERIAL_H_
+#define SERIAL_H_
+
+
+
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -41,3 +46,4 @@ public:
     int read(char *data, int quantity);
     void flush();
 };
+#endif // !SERIAL_H_

@@ -4,8 +4,10 @@
 #include <vector>
 #include <fstream>
 #include <cstdlib>
-#include "createfile.h"
-
+//#include "createfile.h"
+#include "Riscduinov.h"
+#include "ProgramFile.h"
+#include "MemoryInitialisationFile.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -20,6 +22,7 @@
 
 enum Config_States { ST_IDLE, ST_BAUDRATE, ST_SERIAL_PORT, ST_FILE, ST_DELAY };
 enum OutputFileFormat { NONE = 0, LATTICE_HEX, ALTERA_MIF };
+enum FileExtension { ELF = 0, iHEX, S19, BIN };
 typedef struct
 {
     uint32_t baudrate = 0;
@@ -37,9 +40,8 @@ typedef struct
 	bool Verbose = false;
 
 	uint32_t delay_ms = 0;
+
 }ConfigStruct;
-
-
 
 void PrintMenu(void)
 {
@@ -57,7 +59,7 @@ void PrintMenu(void)
 ConfigStruct GetConfig(std::vector<std::string> &InputArgs)
 {
     ConfigStruct Config = {115200, "", "", true, 5};
-    enum Config_States Config_ST = ST_IDLE;
+    enum Config_States Config_ST = Config_States::ST_IDLE;
     for (int i = 0; i < InputArgs.size(); i++)
     {
         switch (Config_ST)
@@ -118,77 +120,67 @@ ConfigStruct GetConfig(std::vector<std::string> &InputArgs)
     }
     return Config;
 }
-void SendFile(std::ifstream &File, Serial &RiscV, const ConfigStruct &Config)
+bool getElfInfoAndConfig(std::ifstream &File, uint32_t &entry_point, uint32_t &len)
 {
-    char byte;
-    char Ack[10];
-    std::memset(Ack, 0, sizeof(Ack));
-    RiscV.flush();
-	bool CPUAck = false;
-	for (int i = 0; i < Config.Ack_Timeout; i++)
-	{
-		if (Config.SendToFlash == true)
-		{
-			RiscV.write("+++1");
-		}
-		else
-		{
-			RiscV.write("+++2");
-		}
-		if (RiscV.read(Ack, 8))
-			break;
-#ifdef DEBUG
-		std::cout << "Ack_Timeout = " << i << "\n";
-#endif
-		if (std::strcmp(Ack, "RISC-V\n\r"))
-		{
-			std::cerr << "Wrong or no response from the CPU...\n";
-			return;
-		}
-	}
-    while (!File.eof())
-    {
-        byte = File.get();
-        RiscV.write(byte);
-		delay(Config.delay_ms);
-		if (Config.Verbose == true)
-		{
-			std::cout << byte;
-		}
-    }
+	if (File.get() != 0x7F || File.get() != 0x45 || File.get() != 0x4C || File.get() != 0x46)
+		return false;
+	File.seekg(0x18);
+	File.get(reinterpret_cast<char*>(&entry_point), 4);
+	File.seekg(0x34 + 0x10);
+	File.get(reinterpret_cast<char *>(&len), 4);
+	File.seekg(entry_point);
+	len -= entry_point;
+	return true;
 }
-int ConvOutputFormat(const ConfigStruct& Config)
+
+int main1(void)
 {
-	size_t pos = Config.fileName.rfind(".bin");
-	if (pos != std::string::npos)
-	{
-		std::string outputFileName = Config.fileName;
-		
-		switch (Config.OutputFileFormat)
-		{
-			case LATTICE_HEX:
-				outputFileName.replace(pos, strlen(".bin"), ".mem");
-				return LatticeCreateHexFile(Config.fileName.c_str(), outputFileName.c_str());
-			case ALTERA_MIF:
-				outputFileName.replace(pos, strlen(".bin"), ".mif");
-				return AlteraCreateMifFile(Config.fileName.c_str(), outputFileName.c_str());
-			default:
-			break;
-		}
-		return 0;
-	}
-	else
-	{
-		std::cerr << "Cannot convert a non binary file!\n";
-		return -1;
-	}
+	ProgramFile file;
+	return 0;
 }
+//int main2(void)
+//{
+//	std::ifstream File;
+//	File.open("C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/Project_template/bin/Sortie.elf", std::ifstream::binary);
+//	uint32_t entry_point;
+//	uint32_t len;
+//	uint8_t byte;
+//	if (!File.is_open())
+//	{
+//		std::cerr << "Cannot open File \n";
+//		File.close();
+//		return -1;
+//	}
+//	if (!getElfInfo(File, entry_point, len))
+//	{
+//		std::cerr << "Error in .elf\n";
+//		File.close();
+//		return -1;
+//	}
+//	File.seekg(entry_point);
+//	for (size_t i = 0; i < len; i += 16)
+//	{
+//		std::printf("0x%08X : ", entry_point + i);
+//		for (int j = 0; j < 16; j++)
+//		{
+//			byte = File.get();
+//			if (File.eof() || i + j >= len)
+//				break;
+//			std::printf("%02X ", byte);
+//		}
+//		std::printf("\n");
+//		if (File.eof())
+//			break;
+//	}
+//	File.close();
+//	return 0;
+//}
 int main(int argc, const char *argv[])
 {
     std::vector<std::string> InputArgs;
     ConfigStruct Config;
-    std::ifstream File;
-    Serial RiscV;
+	RiscDuinoV Riscduinov;
+	ProgramFile File;
     // int TIME_EACH_BYTE = 5; // Number of times that we'll try to communicate with the RISC-V
     for (int i = 0; i < argc; i++)
     {
@@ -200,31 +192,40 @@ int main(int argc, const char *argv[])
         PrintMenu();
         return 0;
     }
-	if (Config.OutputFileFormat != NONE && Config.fileName.empty() == false)
+	if (Config.fileName.empty() == false)
 	{
-		ConvOutputFormat(Config);
-	}
-	if (Config.fileName.empty() == false && Config.port.empty() == false)
-	{
-		File.open(Config.fileName);
-
-		if (!File.is_open())
+		File.open(Config.fileName.c_str());
+		if (!File.isOpen())
 		{
 			std::cerr << "Cannot open " << Config.fileName << "\n";
 			return -1;
 		}
-		RiscV.open(Config.port.c_str(), Config.baudrate);
-		if (!RiscV.isOpen())
-		{
-			std::cerr << "Cannot open " << Config.port << "\n";
-			return -2;
-		}
-		SendFile(File, RiscV, Config);
-
-
-		RiscV.close();
-		File.close();
 	}
-
+	if (Config.OutputFileFormat != NONE)
+	{
+		MemoryInitialisationFile MifObj;
+		bool ret;
+		switch (Config.OutputFileFormat)
+		{
+		case OutputFileFormat::LATTICE_HEX:
+			ret = MifObj.LatticeCreateMif(File);
+			break;
+		case OutputFileFormat::ALTERA_MIF:
+			ret = MifObj.CreateGenericMif(File);
+			break;
+		default:
+			ret = false;
+			break;
+		}
+	}
+	if (Config.port.empty() == false)
+	{
+		Riscduinov.setPort(Config.port.c_str());
+		Riscduinov.setSendToFlash(Config.SendToFlash);
+		Riscduinov.setAckTimeout(Config.Ack_Timeout);
+		if (!Riscduinov.sendFile(File, Config.Verbose))
+			return -1;
+	}
+	File.close();
     return 0;
 }
