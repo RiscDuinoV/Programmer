@@ -5,7 +5,7 @@ MemoryInitialisationFile::MemoryInitialisationFile()
 
 }
 
-MemoryInitialisationFile::~MemoryFileInitialisation()
+MemoryInitialisationFile::~MemoryInitialisationFile()
 {
 
 }
@@ -15,7 +15,7 @@ bool MemoryInitialisationFile::LatticeCreateMif(ProgramFile& ProgFile)
 	if (!ProgFile.isOpen())
 		return false;
 	_FileName = ProgFile.getFileName();
-	switch (ProgFile.getFileType)
+	switch (ProgFile.getFileType())
 	{
 	case ProgramFile::FileType_t::ELF:
 		replaceExtension(_FileName, "elf", "mem");
@@ -55,7 +55,7 @@ bool MemoryInitialisationFile::CreateGenericMif(ProgramFile& ProgFile)
 	if (!ProgFile.isOpen())
 		return false;
 	_FileName = ProgFile.getFileName();
-	switch (ProgFile.getFileType)
+	switch (ProgFile.getFileType())
 	{
 	case ProgramFile::FileType_t::ELF:
 		replaceExtension(_FileName, "elf", "mif");
@@ -76,6 +76,7 @@ bool MemoryInitialisationFile::CreateGenericMif(ProgramFile& ProgFile)
 	_File << "DATA_RADIX = UNS;\n";
 	_File << "CONTENT BEGIN\n";
 	int address = 0;	
+	int tmp = 0;
 	for (size_t i = 0; i < ProgFile.getLength(); i += 4)
 	{
 		for (int j = 0; j < 4; j++)
@@ -97,9 +98,10 @@ bool MemoryInitialisationFile::CreateGenericMif(ProgramFile& ProgFile)
 
 static bool replaceExtension(std::string& targetStr, const char *targetExt, const char* desiredExtension)
 {
-	size_t pos = target.rfind(targetExt);
+	size_t pos = targetStr.rfind(targetExt);
 	if (pos != std::string::npos)
 		targetStr.replace(pos + 1, 3, desiredExtension);
 	else
 		return false;
+	return true;
 }

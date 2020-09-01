@@ -22,8 +22,8 @@ bool RiscDuinoV::sendFile(ProgramFile& ProgFile, bool verbose)
 		std::cerr << "Cannot open " << _Port << "\n";
 		return false;
 	}
-	if (!resetCPU())
-		return false;
+	//if (!resetCPU())
+	//	return false;
 	switch (ProgFile.getFileType())
 	{
 	case ProgramFile::FileType_t::ELF:
@@ -31,7 +31,7 @@ bool RiscDuinoV::sendFile(ProgramFile& ProgFile, bool verbose)
 		break;
 	case ProgramFile::FileType_t::S19:
 		ret = sendS19(ProgFile, verbose);
-		break:
+		break;
 	default:
 		break;
 	}
@@ -57,10 +57,12 @@ void RiscDuinoV::setSendToFlash(bool sendToFlash)
 bool RiscDuinoV::sendElf(ProgramFile& ProgFile, bool verbose)
 {
 	int byte;
+	uint32_t header[] = { 0xCAFECAFE, ProgFile.getEntryPoint(), ProgFile.getLength() };
 	if (verbose)
 	{
 		std::printf("Entry point = 0x%08X, Size = %d bytes\n", ProgFile.getEntryPoint(), ProgFile.getLength());
 	}
+	_Serial.write(reinterpret_cast<const char*>(&header[0]), sizeof(header));
 	for (size_t i = 0; i < ProgFile.getLength(); i += 16)
 	{
 		std::printf("0x%08X : ", ProgFile.getEntryPoint() + i);
@@ -85,10 +87,10 @@ bool RiscDuinoV::sendElf(ProgramFile& ProgFile, bool verbose)
 					}
 				}
 			}
-
 		}
+		std::printf("\n");
 	}
-	return false;
+	return true;
 }
 
 bool RiscDuinoV::sendS19(ProgramFile& ProgFile, bool verbose)
@@ -120,13 +122,13 @@ bool RiscDuinoV::resetCPU()
 	{
 		if (_SendToFlash == true)
 		{
-			RiscV.write("+++1");
+			_Serial.write("+++1");
 		}
 		else
 		{
-			RiscV.write("+++2");
+			_Serial.write("+++2");
 		}
-		if (RiscV.read(Ack, 8))
+		if (_Serial.read(Ack, 8))
 			break;
 #ifdef DEBUG
 		std::cout << "Ack_Timeout = " << i << "\n";

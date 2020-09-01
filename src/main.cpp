@@ -175,8 +175,11 @@ int main1(void)
 //	File.close();
 //	return 0;
 //}
-int main(int argc, const char *argv[])
+//int main(int argc, const char *argv[])
+int main()
 {
+	int argc = 5;
+	const char *argv[] = {"-p", "COM31", "-a", "C:/Users/Pedro/Documents/Programmation/RISCV/Programmer/Sortie.elf", "-v", "-r"};
     std::vector<std::string> InputArgs;
     ConfigStruct Config;
 	RiscDuinoV Riscduinov;

@@ -76,7 +76,7 @@ uint32_t ProgramFile::getLength() const
 
 void ProgramFile::parseFileType()
 {
-	char tmp[] = { _File.get(), _File.get() , _File.get() , _File.get() };
+	char tmp[] = { (char)(_File.get() & 0xFF), (char)(_File.get() & 0xFF), (char)(_File.get() & 0xFF), (char)(_File.get() & 0xFF)};
 	if (tmp[0] == 0x7F && tmp[1] == 0x45 && tmp[2] == 0x4C && tmp[3] == 0x46)
 	{
 		_FileType = FileType_t::ELF;
