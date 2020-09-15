@@ -28,8 +28,8 @@ class RiscDuinoV:
     def sendFile(self, ProgFile : ProgramFile):
         if self.isOpen() == False:
             return -1
-        # if self.__ResetCpu() == False:
-        #     return -1
+        if self.__ResetCpu() == False:
+            return -1
         print("Sending...")
         if ProgFile.file_extension[1] == ".elf":
             segments = ProgFile.GetElfSegments()
@@ -48,11 +48,23 @@ class RiscDuinoV:
                 time.sleep(self.__delay_inter_byte / 1000)
         i = 0
         address = segment.addr
+        char_arr = [0] * 16
+#         for i in range(len(segment.data)):
+#             if i % 16 == 0:
+#                 print("0x%08X : " %(address + i), end='')
         for byte in segment.data:
             self.__serial_handler.write(int(byte & 0xFF).to_bytes(1, "little"))
             time.sleep(self.__delay_inter_byte / 1000)
             if self.__verbose == True:
+                char_arr[i % 16] = byte
                 if i % 16 == 0:
+                    if i != 0:
+                        for char in char_arr:
+                            char = "%c" %(char)
+                            if char.isprintable():
+                                print("%c" %(char), end='')
+                            else:
+                                print(".", end='')
                     print("\n0x%08X : " %(address + i), end='')
                 print("%02X " %(byte), end='')
                 i += 1

@@ -33,7 +33,11 @@ class ProgramFile:
         for segment in elffile.iter_segments():
             if segment['p_type'] == 'PT_LOAD':
                 addr = segment['p_paddr']
-                ret.append(ElfSegments(addr, segment.data()))
+                if addr == 0 and elffile["e_entry"] != 0:
+                    addr = elffile["e_entry"]
+                    ret.append(ElfSegments(addr, segment.data()[addr : len(segment.data())]))
+                else:
+                    ret.append(ElfSegments(addr, segment.data()))
         self.__file_handler.seek(0)
         return ret
     

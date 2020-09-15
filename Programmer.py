@@ -83,22 +83,24 @@ def main(args):
     ProgFile.open()
     if ProgFile.isOpen() == False:
         print("Cannot open %s" %(Config.fileName))
-        return -1
+        sys.exit(-1)
     if Config.OutputFileFormat != OutputFileFormat.NONE:
         if Config.OutputFileFormat == OutputFileFormat.LATTICE_HEX:
             InitialisationFile.Lattice(ProgFile)
         elif Config.OutputFileFormat == OutputFileFormat.ALTERA_MIF:
             InitialisationFile.Altera(ProgFile)
     if len(Config.port) == 0:
-        return 0
+        sys.exit(0)
     riscduinov = RiscDuinoV(Config.port, Config.baudrate, Config.Ack_Timeout, Config.SendToFlash, Config.delay_ms, Config.Verbose)
     riscduinov.open()
     if riscduinov.isOpen() == False:
         print("Cannot open %s" %(Config.port))
-        return -1
+        sys.exit(-1)
     riscduinov.sendFile(ProgFile)
     riscduinov.close()
     ProgFile.close()
 if __name__ == "__main__":
-    argv = ["-p", "COM5", "-a", "D:/Programmation/RISCV/RiscV_Projects/Project_template/bin/Sortie.elf", "-v", "-r"]
-    main(argv)
+    # argv = ["-p", "COM25", "-a", "C:/Users/Pedro/AppData/Local/Temp/arduino_build_64372/riscduinov.ino.elf", "-v", "-r"]
+    # argv = ["-p", "COM25", "-a", "C:/Users/Pedro/Documents/Programmation/RISCV/RiscV_Projects/Project_template/bin/Sortie.elf", "-v", "-r"]
+    main(sys.argv)
+    sys.exit(0)
